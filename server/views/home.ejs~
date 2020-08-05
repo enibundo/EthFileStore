@@ -1,0 +1,144 @@
+<!DOCTYPE html> 
+<html> 
+  
+<head> 
+    <title>etherufs</title> 
+      
+    <style type="text/css" media="screen"> 
+
+      body {
+	  padding-top: 5rem;
+      }
+      .starter-template {
+	  padding: 3rem 1.5rem;
+	  text-align: center;
+      }
+    </style>
+
+    <!-- CSS only -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+    
+    <!-- JS, Popper.js, and jQuery -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js" integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI" crossorigin="anonymous"></script>
+    <script src='https://cdn.jsdelivr.net/npm/ethers@5.0.7/dist/ethers.umd.min.js'></script>
+    
+    <script>
+      var contract = "0x52E78F4850559eC2232ad4d635750307531E90c1";
+
+      var abi = [
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "fileId",
+				"type": "string"
+			}
+		],
+		"name": "FileStored",
+		"type": "event"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "fileId",
+				"type": "string"
+			}
+		],
+		"name": "StoreFile",
+		"outputs": [],
+		"stateMutability": "payable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "ViewMyStoredFiles",
+		"outputs": [
+			{
+				"internalType": "string[]",
+				"name": "",
+				"type": "string[]"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	}
+      ];
+      
+      const toBase64 = file => new Promise((resolve, reject) => {
+	  const reader = new FileReader();
+	  reader.readAsDataURL(file);
+	  reader.onload = () => resolve(reader.result);
+	  reader.onerror = error => reject(error);
+      });
+
+      const sendFile = async function()
+      {
+	  console.log("asdsadsada");
+	  
+	  const file = document.getElementById('myFile').files[0];	
+	  var v = await toBase64(file);
+	  var message = {content:v};
+	  
+	  var ipfsId = await $.ajax("upload", {
+	      data : JSON.stringify(message),
+	      contentType : 'application/json',
+	      type : 'POST',
+	  }, function(data, status){
+	      return data;
+	  });
+
+	  
+	  var _mxContract = new ethers.Contract(contract, abi, dapp.provider.getSigner());
+	  _mxContract.methods.StoreFile(ipfsId).send({value:0.12});
+      }
+
+      async function connectToMetaMask() {
+	  try {
+	      const addresses = await ethereum.enable();
+	      const address = addresses[0]
+	      const provider = new ethers.providers.Web3Provider(ethereum);
+	      dapp = { address, provider };
+	      console.log(dapp)
+	      
+	  } catch(err) {
+	      console.error(err);
+	  }
+      }
+      
+      $(document).ready(function(){
+	  connectToMetaMask();
+	  
+      });
+      </script>
+    
+</head> 
+<body class="text-center">
+  
+  <nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
+    
+    <div class="collapse navbar-collapse" id="navbarsExampleDefault">
+      <ul class="navbar-nav mr-auto">
+	<li class="nav-item active">
+	  <form class="form-inline my-2 my-lg-0">
+	    <input type='file' id='myFile' class="form-control mr-sm-2" multiple/>
+	    <button class="btn btn-primary  my-2 my-sm-0" type="submit" onclick='sendFile()'>Upload</button>
+	  </form>
+	  
+	</li>
+      </ul>
+    </div>
+  </nav>
+  <center>etherufs</center>
+  
+  <form class="form-signin">
+    
+  </form>
+</center>
+</body> 
+  
+</html>  

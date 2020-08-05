@@ -1,0 +1,190 @@
+<!DOCTYPE html> 
+<html> 
+  
+<head> 
+    <title>etherufs</title> 
+      
+    <style type="text/css" media="screen"> 
+
+      body {
+	  padding-top: 5rem;
+      }
+      .starter-template {
+	  padding: 3rem 1.5rem;
+	  text-align: center;
+      }
+    </style>
+
+    <!-- CSS only -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+    
+    <!-- JS, Popper.js, and jQuery -->
+    <script
+      src="https://code.jquery.com/jquery-3.5.1.min.js"
+      integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
+      crossorigin="anonymous"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+	    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+	    crossorigin="anonymous"></script>
+    
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"
+	    integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI"
+	    crossorigin="anonymous"></script>
+    
+    <script src='https://cdn.jsdelivr.net/npm/ethers@5.0.7/dist/ethers.umd.min.js'></script>
+    
+    <script>
+      var contract = "0x52E78F4850559eC2232ad4d635750307531E90c1";
+
+      var abi = [
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "fileId",
+				"type": "string"
+			}
+		],
+		"name": "FileStored",
+		"type": "event"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "fileId",
+				"type": "string"
+			}
+		],
+		"name": "StoreFile",
+		"outputs": [],
+		"stateMutability": "payable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "ViewMyStoredFiles",
+		"outputs": [
+			{
+				"internalType": "string[]",
+				"name": "",
+				"type": "string[]"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	}
+      ];
+      
+      const toBase64 = file => new Promise((resolve, reject) => {
+	  const reader = new FileReader();
+	  reader.readAsDataURL(file);
+	  reader.onload = () => resolve(reader.result);
+	  reader.onerror = error => reject(error);
+      });
+
+      const sendFile = async function()
+      {
+	  const file = document.getElementById('myFile').files[0];	
+	  var v = await toBase64(file);
+	  var message = {content:v};
+	  
+	  var ipfsId = await $.ajax("upload", {
+	      data : JSON.stringify(message),
+	      contentType : 'application/json',
+	      type : 'POST',
+	  }, function(data, status){
+	      return data;
+	  });
+
+	  
+	  var _mxContract = new ethers.Contract(contract, abi, dapp.provider.getSigner());
+
+	  let overrides = {
+	      value: ethers.utils.parseEther("0.10001")
+	  };
+
+	  _mxContract.StoreFile(ipfsId, overrides);
+	  
+	  
+      }
+
+      async function connectToMetaMask() {
+	  try {
+	      const addresses = await ethereum.enable();
+	      const address = addresses[0]
+	      const provider = new ethers.providers.Web3Provider(ethereum);
+	      dapp = { address, provider };
+	      console.log(dapp)
+	      
+	  } catch(err) {
+	      console.error(err);
+	  }
+      }
+
+      const fillFiles = async function()
+      {
+	  var _mxContract = new ethers.Contract(contract, abi, dapp.provider.getSigner());
+	  
+	  var storedFiles = _mxContract.ViewMyStoredFiles();
+	  return storedFiles;
+	  
+      }
+      
+      $(document).ready(async function(){
+	  connectToMetaMask().then(function(res){
+
+	      var contentFill = "";
+	      
+	      fillFiles().then(function(r){
+		  for (i in r){
+		      contentFill +=
+			  "<tr>" + 
+			  "<th scope='row'>1</th>"+
+			  "<td>"+r[i]+"</td>"+
+			  "<td><a href=''>link</a></td>"+
+			  "</tr>";
+		      
+		  }
+		  
+		  $("#tablecontent").html(contentFill);
+	      });
+	  });
+      });
+      </script>
+    
+</head> 
+<body class="text-center">
+  
+  <nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
+    
+    <div class="collapse navbar-collapse" id="navbarsExampleDefault">
+      <ul class="navbar-nav mr-auto">
+	<li class="nav-item active">
+	  <form class="form-inline my-2">
+	    <input type='file' id='myFile' class="form-control mr-sm-2" multiple/>
+	    <a class="btn btn-primary  my-2 my-sm-0" type="submit" onclick='sendFile()'>Upload</a>
+	  </form>
+	</li>
+      </ul>
+    </div>
+  </nav>
+
+  <table class="table">
+  <thead>
+    <tr>
+      <th scope="col">Date</th>
+      <th scope="col">Id</th>
+      <th scope="col">Download</th>
+    </tr>
+  </thead>
+  <tbody id="tablecontent">
+  </tbody>
+</table>
+  
+</body> 
+  
+</html>  
